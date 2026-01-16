@@ -2,6 +2,7 @@
 """Веб-сервер для OAuth авторизации HH.RU"""
 
 import json
+import os
 import sqlite3
 import time
 from pathlib import Path
