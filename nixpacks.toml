@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["python310", "pip"]
-
-[phases.install]
-cmds = ["python -m pip install -r requirements_public.txt"]
-
-[start]
-cmd = "gunicorn auth_server:app"
