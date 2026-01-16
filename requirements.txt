@@ -2,3 +2,4 @@ flask==3.1.0
 requests==2.32.5
 python-telegram-bot==21.10
 gunicorn==21.2.0
+-e .
