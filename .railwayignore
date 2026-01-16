@@ -1,0 +1,11 @@
+Dockerfile
+docker-compose.yml
+.git
+.gitignore
+*.md
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.vscode/
+.idea/
