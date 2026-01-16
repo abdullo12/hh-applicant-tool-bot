@@ -3,6 +3,7 @@
 
 import json
 import os
+import requests
 import sqlite3
 import time
 from pathlib import Path
