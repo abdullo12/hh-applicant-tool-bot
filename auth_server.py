@@ -143,7 +143,7 @@ ERROR_PAGE = """
 
 @app.route('/auth')
 def auth():
-    """Инструкция по авторизации"""
+    """Форма авторизации"""
     user_id = request.args.get('user_id')
     if not user_id:
         return "Missing user_id", 400
@@ -156,71 +156,162 @@ def auth():
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Авторизация HH.RU</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 20px;
-            background: #f5f5f5;
         }
         .container {
             background: white;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
         }
-        h1 { color: #333; }
-        .step { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #667eea; }
-        .button {
-            display: inline-block;
-            padding: 12px 30px;
+        h1 { color: #333; margin-bottom: 20px; font-size: 24px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
             background: #667eea;
             color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
         }
-        code { background: #eee; padding: 2px 6px; border-radius: 3px; }
+        button:disabled { background: #ccc; }
+        .info { color: #666; font-size: 14px; margin-top: 15px; line-height: 1.5; }
+        .error { color: #f5576c; margin-top: 10px; }
+        .success { color: #4caf50; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔐 Авторизация на HH.RU</h1>
-        
-        <div class="step">
-            <h3>Шаг 1: Установите приложение</h3>
-            <p>Установите <code>hh-applicant-tool</code> на свой компьютер или телефон (Termux)</p>
-            <a href="https://github.com/s3rgeym/hh-applicant-tool" class="button" target="_blank">Инструкция</a>
+        <h1>🔐 Вход на HH.RU</h1>
+        <form id="authForm">
+            <input type="text" id="login" placeholder="Email или телефон" required>
+            <input type="password" id="password" placeholder="Пароль" required>
+            <button type="submit" id="submitBtn">Войти</button>
+            <div id="message"></div>
+        </form>
+        <div class="info">
+            ⚠️ Ваши данные не сохраняются на сервере.
+            Используются только для получения токенов.
         </div>
-        
-        <div class="step">
-            <h3>Шаг 2: Авторизуйтесь</h3>
-            <p>Выполните команду:</p>
-            <code>hh-applicant-tool auth</code>
-        </div>
-        
-        <div class="step">
-            <h3>Шаг 3: Получите токены</h3>
-            <p>После авторизации выполните:</p>
-            <code>hh-applicant-tool config</code>
-            <p>Скопируйте <code>access_token</code> и <code>refresh_token</code></p>
-        </div>
-        
-        <div class="step">
-            <h3>Шаг 4: Отправьте токены боту</h3>
-            <p>В Telegram отправьте боту:</p>
-            <code>/settoken ACCESS_TOKEN REFRESH_TOKEN</code>
-        </div>
-        
-        <p style="margin-top: 30px; color: #666;">
-            ⚠️ <strong>Важно:</strong> Не делитесь токенами с никем!
-        </p>
-        
-        <a href="https://t.me/clever8_bot" class="button">Вернуться в бота</a>
     </div>
+    <script>
+        document.getElementById('authForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('message');
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            
+            btn.disabled = true;
+            btn.textContent = 'Загрузка...';
+            msg.textContent = '';
+            
+            try {
+                const res = await fetch('/do_auth', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({user_id: '{{ user_id }}', login, password})
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    msg.className = 'success';
+                    msg.textContent = '✅ Успешно! Возвращайтесь в бота';
+                    setTimeout(() => window.location.href = 'https://t.me/clever8_bot', 2000);
+                } else {
+                    msg.className = 'error';
+                    msg.textContent = '❌ ' + data.error;
+                    btn.disabled = false;
+                    btn.textContent = 'Войти';
+                }
+            } catch (err) {
+                msg.className = 'error';
+                msg.textContent = '❌ Ошибка: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Войти';
+            }
+        };
+    </script>
 </body>
 </html>
     ''', user_id=user_id)
+
+
+@app.route('/do_auth', methods=['POST'])
+def do_auth():
+    """Выполнение авторизации"""
+    data = request.json
+    user_id = data.get('user_id')
+    login = data.get('login')
+    password = data.get('password')
+    
+    if not all([user_id, login, password]):
+        return {'success': False, 'error': 'Не все поля заполнены'}
+    
+    try:
+        # Используем прямую авторизацию
+        response = requests.post('https://hh.ru/oauth/token', data={
+            'grant_type': 'password',
+            'username': login,
+            'password': password,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET
+        })
+        
+        if response.status_code != 200:
+            return {'success': False, 'error': 'Неверный логин или пароль'}
+        
+        tokens = response.json()
+        access_token = tokens['access_token']
+        refresh_token = tokens['refresh_token']
+        expires_at = int(time.time()) + tokens.get('expires_in', 0)
+        
+        # Получаем инфо о пользователе
+        me_response = requests.get('https://api.hh.ru/me', headers={
+            'Authorization': f'Bearer {access_token}'
+        })
+        
+        if me_response.status_code == 200:
+            user_info = me_response.json()
+            username = f"{user_info.get('first_name', '')} {user_info.get('last_name', '')}".strip()
+        else:
+            username = login
+        
+        # Сохраняем в БД
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('''
+            INSERT OR REPLACE INTO users (telegram_id, username, access_token, refresh_token, access_expires_at)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (int(user_id), username, access_token, refresh_token, expires_at))
+        conn.commit()
+        conn.close()
+        
+        return {'success': True}
+        
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
 
 
 @app.route('/callback')
