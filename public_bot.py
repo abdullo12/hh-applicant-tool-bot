@@ -226,6 +226,41 @@ async def letter(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def settoken(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Команда /settoken - установка токенов"""
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "❌ Использование:\n"
+            "`/settoken ACCESS_TOKEN REFRESH_TOKEN`",
+            parse_mode='Markdown'
+        )
+        return
+    
+    access_token = context.args[0]
+    refresh_token = context.args[1]
+    
+    # Проверяем токены
+    if not access_token.startswith('USER') or not refresh_token.startswith('USER'):
+        await update.message.reply_text("❌ Неверный формат токенов")
+        return
+    
+    # Сохраняем
+    expires_at = int(time.time()) + 1209600  # 2 недели
+    save_user_tokens(
+        update.effective_user.id,
+        update.effective_user.username or str(update.effective_user.id),
+        access_token,
+        refresh_token,
+        expires_at
+    )
+    
+    await update.message.reply_text(
+        "✅ Токены сохранены!\n\n"
+        "Теперь создайте сопроводительное письмо:\n"
+        "/letter Ваш текст"
+    )
+
+
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда /stats"""
     user = get_user(update.effective_user.id)
@@ -269,6 +304,7 @@ async def main_async():
     application = Application.builder().token(BOT_TOKEN).build()
     
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("settoken", settoken))
     application.add_handler(CommandHandler("apply", apply))
     application.add_handler(CommandHandler("letter", letter))
     application.add_handler(CommandHandler("stats", stats))

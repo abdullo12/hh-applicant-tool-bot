@@ -143,20 +143,84 @@ ERROR_PAGE = """
 
 @app.route('/auth')
 def auth():
-    """Перенаправление на HH для авторизации"""
+    """Инструкция по авторизации"""
     user_id = request.args.get('user_id')
     if not user_id:
         return "Missing user_id", 400
     
-    params = {
-        'response_type': 'code',
-        'client_id': CLIENT_ID,
-        'redirect_uri': REDIRECT_URI,
-        'state': user_id  # Передаем telegram_id через state
-    }
-    
-    auth_url = f"https://hh.ru/oauth/authorize?{urlencode(params)}"
-    return redirect(auth_url)
+    return render_template_string('''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Авторизация HH.RU</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .step { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #667eea; }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        code { background: #eee; padding: 2px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Авторизация на HH.RU</h1>
+        
+        <div class="step">
+            <h3>Шаг 1: Установите приложение</h3>
+            <p>Установите <code>hh-applicant-tool</code> на свой компьютер или телефон (Termux)</p>
+            <a href="https://github.com/s3rgeym/hh-applicant-tool" class="button" target="_blank">Инструкция</a>
+        </div>
+        
+        <div class="step">
+            <h3>Шаг 2: Авторизуйтесь</h3>
+            <p>Выполните команду:</p>
+            <code>hh-applicant-tool auth</code>
+        </div>
+        
+        <div class="step">
+            <h3>Шаг 3: Получите токены</h3>
+            <p>После авторизации выполните:</p>
+            <code>hh-applicant-tool config</code>
+            <p>Скопируйте <code>access_token</code> и <code>refresh_token</code></p>
+        </div>
+        
+        <div class="step">
+            <h3>Шаг 4: Отправьте токены боту</h3>
+            <p>В Telegram отправьте боту:</p>
+            <code>/settoken ACCESS_TOKEN REFRESH_TOKEN</code>
+        </div>
+        
+        <p style="margin-top: 30px; color: #666;">
+            ⚠️ <strong>Важно:</strong> Не делитесь токенами с никем!
+        </p>
+        
+        <a href="https://t.me/clever8_bot" class="button">Вернуться в бота</a>
+    </div>
+</body>
+</html>
+    ''', user_id=user_id)
 
 
 @app.route('/callback')
