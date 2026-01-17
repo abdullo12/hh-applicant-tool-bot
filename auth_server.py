@@ -144,7 +144,7 @@ ERROR_PAGE = """
 
 @app.route('/auth')
 def auth():
-    """Форма авторизации"""
+    """Инструкция по получению токенов"""
     user_id = request.args.get('user_id')
     if not user_id:
         return "Missing user_id", 400
@@ -162,98 +162,87 @@ def auth():
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
         .container {
             background: white;
-            padding: 30px;
+            padding: 25px;
             border-radius: 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            max-width: 400px;
-            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
         }
-        h1 { color: #333; margin-bottom: 20px; font-size: 24px; }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
+        h1 { color: #333; margin-bottom: 20px; font-size: 22px; }
+        .method { 
+            background: #f9f9f9; 
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
         }
-        button {
-            width: 100%;
-            padding: 14px;
+        .method h3 { color: #667eea; margin-bottom: 10px; font-size: 18px; }
+        .method p { color: #666; line-height: 1.6; margin: 8px 0; font-size: 14px; }
+        code { 
+            background: #eee; 
+            padding: 3px 8px; 
+            border-radius: 4px;
+            font-size: 13px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
             background: #667eea;
             color: white;
-            border: none;
+            text-decoration: none;
             border-radius: 8px;
-            font-size: 16px;
+            margin-top: 20px;
             font-weight: 600;
-            cursor: pointer;
-            margin-top: 10px;
         }
-        button:disabled { background: #ccc; }
-        .info { color: #666; font-size: 14px; margin-top: 15px; line-height: 1.5; }
-        .error { color: #f5576c; margin-top: 10px; }
-        .success { color: #4caf50; margin-top: 10px; }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔐 Вход на HH.RU</h1>
-        <form id="authForm">
-            <input type="text" id="login" placeholder="Email или телефон" required>
-            <input type="password" id="password" placeholder="Пароль" required>
-            <button type="submit" id="submitBtn">Войти</button>
-            <div id="message"></div>
-        </form>
-        <div class="info">
-            ⚠️ Ваши данные не сохраняются на сервере.
-            Используются только для получения токенов.
+        <h1>🔐 Как получить токены HH.RU</h1>
+        
+        <div class="method">
+            <h3>📱 Способ 1: Android (рекомендуется)</h3>
+            <p>1. Установите приложение для извлечения токенов из HH</p>
+            <p>2. Авторизуйтесь в официальном приложении HH</p>
+            <p>3. Извлеките <code>access_token</code> и <code>refresh_token</code></p>
+            <p>4. Отправьте боту:</p>
+            <code>/settoken ACCESS_TOKEN REFRESH_TOKEN</code>
         </div>
+        
+        <div class="method">
+            <h3>💻 Способ 2: Компьютер</h3>
+            <p>1. Установите <code>hh-applicant-tool</code></p>
+            <p>2. Выполните: <code>hh-applicant-tool auth</code></p>
+            <p>3. Получите токены: <code>hh-applicant-tool config</code></p>
+            <p>4. Отправьте боту:</p>
+            <code>/settoken ACCESS_TOKEN REFRESH_TOKEN</code>
+        </div>
+        
+        <div class="method">
+            <h3>👥 Способ 3: Попросите друга</h3>
+            <p>Попросите друга с ПК получить токены и отправить вам</p>
+        </div>
+        
+        <div class="warning">
+            ⚠️ <strong>Важно:</strong> Не делитесь токенами с незнакомыми людьми!
+        </div>
+        
+        <a href="https://t.me/clever8_bot" class="button">Вернуться в бота</a>
     </div>
-    <script>
-        document.getElementById('authForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const msg = document.getElementById('message');
-            const login = document.getElementById('login').value;
-            const password = document.getElementById('password').value;
-            
-            btn.disabled = true;
-            btn.textContent = 'Загрузка...';
-            msg.textContent = '';
-            
-            try {
-                const res = await fetch('/do_auth', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({user_id: '{{ user_id }}', login, password})
-                });
-                const data = await res.json();
-                
-                if (data.success) {
-                    msg.className = 'success';
-                    msg.textContent = '✅ Успешно! Возвращайтесь в бота';
-                    setTimeout(() => window.location.href = 'https://t.me/clever8_bot', 2000);
-                } else {
-                    msg.className = 'error';
-                    msg.textContent = '❌ ' + data.error;
-                    btn.disabled = false;
-                    btn.textContent = 'Войти';
-                }
-            } catch (err) {
-                msg.className = 'error';
-                msg.textContent = '❌ Ошибка: ' + err.message;
-                btn.disabled = false;
-                btn.textContent = 'Войти';
-            }
-        };
-    </script>
 </body>
 </html>
     ''', user_id=user_id)

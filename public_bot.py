@@ -185,7 +185,9 @@ async def apply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user[6]:
         await update.message.reply_text(
             "❌ Сначала создайте сопроводительное письмо:\n"
-            "/letter"
+            "/letter Ваш текст\n\n"
+            "Или используйте AI:\n"
+            "/apply_ai"
         )
         return
     
@@ -201,6 +203,55 @@ async def apply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(
         f"{'✅' if code == 0 else '❌'} Результат:\n\n{output}"
+    )
+
+
+async def apply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Команда /apply_ai - отклики с AI"""
+    user = get_user(update.effective_user.id)
+    if not user:
+        await update.message.reply_text("❌ Сначала авторизуйтесь: /start")
+        return
+    
+    await update.message.reply_text(
+        "🤖 Рассылка с AI-генерацией писем...\n\n"
+        "⚠️ Для использования AI нужно настроить OpenAI API.\n\n"
+        "Как настроить:\n"
+        "1. Получите API ключ: https://platform.openai.com/api-keys\n"
+        "2. Отправьте боту:\n"
+        "`/set_openai_key YOUR_API_KEY`\n\n"
+        "Или используйте бесплатные альтернативы:\n"
+        "- DeepSeek: https://platform.deepseek.com\n"
+        "- Groq: https://console.groq.com",
+        parse_mode='Markdown'
+    )
+
+
+async def set_openai_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Команда /set_openai_key"""
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Использование:\n"
+            "`/set_openai_key YOUR_API_KEY`\n\n"
+            "Получите ключ: https://platform.openai.com/api-keys",
+            parse_mode='Markdown'
+        )
+        return
+    
+    api_key = context.args[0]
+    
+    # Сохраняем в БД
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('ALTER TABLE users ADD COLUMN openai_key TEXT', ())
+    c.execute('UPDATE users SET openai_key = ? WHERE telegram_id = ?', (api_key, update.effective_user.id))
+    conn.commit()
+    conn.close()
+    
+    await update.message.reply_text(
+        "✅ OpenAI API ключ сохранен!\n\n"
+        "Теперь используйте:\n"
+        "/apply_ai"
     )
 
 
@@ -306,6 +357,8 @@ async def main_async():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("settoken", settoken))
     application.add_handler(CommandHandler("apply", apply))
+    application.add_handler(CommandHandler("apply_ai", apply_ai))
+    application.add_handler(CommandHandler("set_openai_key", set_openai_key))
     application.add_handler(CommandHandler("letter", letter))
     application.add_handler(CommandHandler("stats", stats))
     application.add_handler(CommandHandler("help", help_command))
